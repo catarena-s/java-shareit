@@ -39,11 +39,10 @@ public interface ItemRepository {
 
     /**
      * Returns a collection of items for search substring by name or description
-     * @param userId
      * @param text search substring
      * @return collection of items
      */
-    Collection<Item> search(long userId, String text);
+    Collection<Item> search(String text);
 
     /**
      * Check item with itemId is existing in storage for owner with userId

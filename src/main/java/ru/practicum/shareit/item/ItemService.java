@@ -39,9 +39,8 @@ public interface ItemService {
 
     /**
      * Returns a collection of items for search substring by name or description
-     * @param userId
      * @param text - search substring
      * @return collection of items, converted to DTO
      */
-    List<ItemDto> search(long userId, String text);
+    List<ItemDto> search(String text);
 }

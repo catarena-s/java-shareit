@@ -70,6 +70,6 @@ public class ItemController {
             log.debug("Parameter 'text' is empty");
             return Collections.emptyList();
         }
-        return service.search(userId, text);
+        return service.search(text);
     }
 }

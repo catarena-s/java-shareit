@@ -69,7 +69,7 @@ public class ItemInMemoryRepository implements ItemRepository {
     }
 
     @Override
-    public Collection<Item> search(long userId, String text) {
+    public Collection<Item> search(String text) {
         return items.values().stream()
                 .flatMap(Collection::stream)
                 .filter(f -> (f.isAvailable() &&

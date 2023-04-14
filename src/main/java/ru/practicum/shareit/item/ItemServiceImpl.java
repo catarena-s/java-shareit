@@ -55,8 +55,8 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public List<ItemDto> search(long userId, String text) {
-        return storage.search(userId, text)
+    public List<ItemDto> search(String text) {
+        return storage.search(text)
                 .stream()
                 .map(ItemMapper::toItemDto)
                 .collect(Collectors.toList());

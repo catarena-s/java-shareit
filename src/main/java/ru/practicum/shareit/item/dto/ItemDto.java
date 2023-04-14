@@ -17,9 +17,9 @@ import javax.validation.constraints.NotNull;
 @Builder
 public class ItemDto {
     private long id;//уникальный идентификатор вещи
-    @NotBlank(message = "Name cannot be empty")
+    @NotBlank(message = "Name cannot be empty or null")
     private String name;//краткое название
-    @NotBlank(message = "Name cannot be empty")
+    @NotBlank(message = "Name cannot be empty or null")
     private String description;//развёрнутое описание
     @NotNull(message = "Available cannot be null")
     private Boolean available;//статус о том, доступна или нет вещь для аренды
