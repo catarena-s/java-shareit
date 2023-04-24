@@ -1,54 +1,40 @@
 package ru.practicum.shareit.item;
 
-import ru.practicum.shareit.item.dto.ItemDto;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 import ru.practicum.shareit.item.model.Item;
 
-import java.util.Collection;
+import java.util.List;
 
-public interface ItemRepository {
+@Repository
+public interface ItemRepository extends JpaRepository<Item, Long> {
     /**
      * Get all items by owner
-     * @param userId - owner id
+     * @param owner - owner id
      * @return collection of items
      */
-    Collection<Item> getAllByOwner(long userId);
+    List<Item> findAllByOwner(Long owner);
 
     /**
-     * Get item by id
-     * @param itemId - item id
-     * @return item
+     * Check item with itemId is existing in storage for owner with userId
+     * @param id item's id
+     * @param owner owner's id
+     * @return true or false
      */
-    Item getById(long itemId);
-
-    /**
-     * Create item
-     * @param item - input item data
-     * @param userId - owner id
-     * @return new item
-     */
-    Item create(ItemDto item, long userId);
-
-    /**
-     * Update item's data
-     * @param item new item data
-     * @param itemId item's id
-     * @param userId user updated item
-     * @return
-     */
-    Item update(ItemDto item, long itemId, long userId);
+    boolean existsByIdAndOwner(long id, long owner);
 
     /**
      * Returns a collection of items for search substring by name or description
      * @param text search substring
      * @return collection of items
      */
-    Collection<Item> search(String text);
+    @Query(value = "select it.* from items it " +
+            "where it.available=true and " +
+            "(UPPER(it.name) like %:text% or UPPER(it.description) like %:text%)",
+            nativeQuery = true
+    )
+    List<Item> findAllByNameOrDescriptionIgnoreCase(@Param("text") String text);
 
-    /**
-     * Check item with itemId is existing in storage for owner with userId
-     * @param itemId item's id
-     * @param userId owner's id
-     * @return true or false
-     */
-    boolean existItemsByOwner(long itemId, long userId);
 }

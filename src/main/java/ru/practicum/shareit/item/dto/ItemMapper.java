@@ -12,7 +12,16 @@ public class ItemMapper {
                 .name(item.getName())
                 .description(item.getDescription())
                 .available(item.isAvailable())
-                .request(item.getRequest() != null ? item.getRequest().getId() : null)
+           //     .request(item.getRequest() != null ? item.getRequest().getId() : null)
+                .build();
+    }
+
+    public static Item mapToItem(ItemDto item, long userId) {
+        return Item.builder()
+                .owner(userId)
+                .name(item.getName())
+                .description(item.getDescription())
+                .available(item.getAvailable())
                 .build();
     }
 }

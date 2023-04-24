@@ -20,7 +20,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public Collection<ItemDto> getAllByOwner(long userId) {
-        return storage.getAllByOwner(userId)
+        return storage.findAllByOwner(userId)
                 .stream()
                 .map(ItemMapper::toItemDto)
                 .collect(Collectors.toList());
@@ -28,7 +28,10 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public ItemDto getById(long itemId) {
-        Item item = storage.getById(itemId);
+        if (!storage.existsById(itemId)) {
+            throw new NotFoundException(String.format("Item with id=%d not found", itemId));
+        }
+        Item item = storage.getReferenceById(itemId);
         return ItemMapper.toItemDto(item);
     }
 
@@ -37,26 +40,34 @@ public class ItemServiceImpl implements ItemService {
         if (!userService.existUser(userId)) {
             throw new NotFoundException(String.format("User with id=%d not found", userId));
         }
-        Item newItem = storage.create(item, userId);
+        Item newItem = storage.save(ItemMapper.mapToItem(item, userId));
         return ItemMapper.toItemDto(newItem);
     }
 
     @Override
-    public ItemDto update(ItemDto item, long itemId, long userId) {
+    public ItemDto update(ItemDto itemDto, long itemId, long userId) {
         if (!userService.existUser(userId)) {
             throw new NotFoundException(String.format("User with id=%d not found", userId));
         }
-        if (!storage.existItemsByOwner(itemId, userId)) {
+        if (!storage.existsByIdAndOwner(itemId, userId)) {
             throw new NotFoundException(
                     String.format("Item with id=%d for owner id=%d not founded", itemId, userId));
         }
-        Item updatedItem = storage.update(item, itemId, userId);
+        Item item = storage.getReferenceById(itemId);
+        if (itemDto.getName() != null)
+            item.setName(itemDto.getName());
+        if (itemDto.getDescription() != null)
+            item.setDescription(itemDto.getDescription());
+        if (itemDto.getAvailable() != null)
+            item.setAvailable(itemDto.getAvailable());
+
+        Item updatedItem = storage.save(item);
         return ItemMapper.toItemDto(updatedItem);
     }
 
     @Override
     public List<ItemDto> search(String text) {
-        return storage.search(text)
+        return storage.findAllByNameOrDescriptionIgnoreCase(text.toUpperCase())
                 .stream()
                 .map(ItemMapper::toItemDto)
                 .collect(Collectors.toList());
