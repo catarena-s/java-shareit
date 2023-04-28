@@ -2,6 +2,7 @@ package ru.practicum.shareit.user;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.dto.UserMapper;
@@ -9,69 +10,68 @@ import ru.practicum.shareit.user.model.User;
 
 import javax.validation.ValidationException;
 import java.util.Collection;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-    private final UserRepository storage;
+    private final UserRepository repository;
 
     @Override
+    @Transactional(readOnly = true)
     public Collection<ru.practicum.shareit.user.dto.UserDto> getAll() {
-        return storage.findAll()
-                .stream()
-                .map(UserMapper::toUserDto)
-                .collect(Collectors.toList());
+        return UserMapper.toListDto(repository.findAll());
     }
 
     @Override
+    @Transactional
     public UserDto create(UserDto user) {
-//        if (storage.existEmail(user.getEmail())) {
-//            throw new ValidationException(String.format("User with email='%s' already exist", user.getEmail()));
-//        }
-        User newUser = storage.save(UserMapper.toUser(user));
+        User newUser = repository.save(UserMapper.toUser(user));
         return UserMapper.toUserDto(newUser);
     }
 
-    @SuppressWarnings("checkstyle:ParenPad")
     @Override
+    @Transactional
     public UserDto update(UserDto userDto, long userId) {
-        if (!existUser(userId)) {
-            throw new NotFoundException(String.format("User with id=%s not found", userId));
-        }
-        if (userDto.getEmail() != null && storage.existsByIdNotAndEmail(userId, userDto.getEmail())) {
+        if (userDto.getEmail() != null && isExistsOtherUserWithEmail(userDto, userId)) {
             throw new ValidationException(String.format("Other user with email='%s' already exist", userDto.getEmail()));
         }
-        User user = storage.getReferenceById(userId);
+        User user = repository.findById(userId)
+                .orElseThrow(() -> new NotFoundException(String.format("User with id=%d not found", userId)));
         if (userDto.getName() != null) {
             user.setName(userDto.getName());
         }
         if (userDto.getEmail() != null)
             user.setEmail(userDto.getEmail());
-        User updatedUser = storage.save(user);
+        User updatedUser = repository.save(user);
         return UserMapper.toUserDto(updatedUser);
     }
 
+    private boolean isExistsOtherUserWithEmail(UserDto userDto, long userId) {
+        return repository.existsByIdNotAndEmail(userId, userDto.getEmail());
+    }
+
     @Override
+    @Transactional(readOnly = true)
     public boolean existUser(long userId) {
-        return storage.existsById(userId);
+        return repository.existsById(userId);
     }
 
 
     @Override
+    @Transactional(readOnly = true)
     public UserDto getById(long userId) {
-        if (!existUser(userId)) {
-            throw new NotFoundException(String.format("User with id=%s not found", userId));
-        }
-        return UserMapper.toUserDto(storage.getById(userId));
+        User user = repository.findById(userId)
+                .orElseThrow(() -> new NotFoundException(String.format("User with id=%d not found", userId)));
+        return UserMapper.toUserDto(user);
     }
 
     @Override
+    @Transactional
     public void delete(long userId) {
         if (!existUser(userId)) {
             throw new NotFoundException(String.format("User with id = %s not found", userId));
         }
-        storage.deleteById(userId);
+        repository.deleteById(userId);
     }
 }

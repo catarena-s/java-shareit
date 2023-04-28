@@ -1,5 +1,7 @@
 package ru.practicum.shareit.item;
 
+import ru.practicum.shareit.exceptions.NotFoundException;
+import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 
 import java.util.Collection;
@@ -16,9 +18,10 @@ public interface ItemService {
     /**
      * Get item by id
      * @param itemId
+     * @param userId
      * @return item, converted to DTO
      */
-    ItemDto getById(long itemId);
+    ItemDto getById(long itemId, long userId);
 
     /**
      * Create new item
@@ -43,4 +46,16 @@ public interface ItemService {
      * @return collection of items, converted to DTO
      */
     List<ItemDto> search(String text);
+
+//    boolean existItemAndAvailable(long itemId, boolean b);
+
+    /**
+     * Create comment for item
+     * @param userId user had booked
+     * @param itemId item
+     * @param commentDto comment
+     * @return
+     * @throws NotFoundException
+     */
+    CommentDto createComment(long userId, long itemId, CommentDto commentDto);
 }
