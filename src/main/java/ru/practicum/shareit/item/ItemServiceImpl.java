@@ -167,7 +167,7 @@ public class ItemServiceImpl implements ItemService {
     private static BookingShortDto getLastBooking(List<BookingDto> booking) {
         if (booking == null || booking.isEmpty()) return null;
         return booking.stream()
-                .filter(b -> !b.getStart().isAfter(LocalDateTime.now()))
+                .filter(b -> b.getStart().isBefore(LocalDateTime.now()))
                 .reduce((booking1, booking2) -> booking2)
                 .map(BookingMapping::toShortDto)
                 .orElse(null);
