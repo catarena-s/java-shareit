@@ -1,7 +1,6 @@
 package ru.practicum.shareit.item.dto;
 
 import lombok.Builder;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import ru.practicum.shareit.booking.dto.BookingShortDto;
@@ -15,7 +14,6 @@ import java.util.List;
  */
 @Getter
 @Setter
-@EqualsAndHashCode
 @Builder
 public class ItemDto {
     private long id;//уникальный идентификатор вещи

@@ -12,19 +12,19 @@ public interface UserService {
     Collection<UserDto> getAll();
 
     /**
+     * Create new user
+     * @param user
+     * @return new user, converted to DTO
+     */
+    UserDto create(UserDto user);
+
+    /**
      * Update user's data
      * @param user
      * @param userId
      * @return updates user, converted to DTO
      */
     UserDto update(UserDto user, long userId);
-
-    /**
-     * Create new user
-     * @param user
-     * @return new user, converted to DTO
-     */
-    UserDto create(UserDto user);
 
     /**
      * Get user by id

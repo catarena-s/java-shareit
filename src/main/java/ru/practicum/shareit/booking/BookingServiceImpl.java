@@ -1,33 +1,43 @@
 package ru.practicum.shareit.booking;
 
-import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.dto.BookingDto;
+import ru.practicum.shareit.booking.dto.BookingFilter;
 import ru.practicum.shareit.booking.dto.BookingMapping;
+import ru.practicum.shareit.booking.enums.BookingState;
+import ru.practicum.shareit.booking.enums.BookingStatus;
 import ru.practicum.shareit.booking.model.Booking;
-import ru.practicum.shareit.booking.model.QBooking;
+import ru.practicum.shareit.exceptions.AvailableException;
+import ru.practicum.shareit.exceptions.NoAccessException;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.exceptions.RequestException;
+import ru.practicum.shareit.exceptions.ValidateException;
 import ru.practicum.shareit.item.ItemRepository;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.UserRepository;
 import ru.practicum.shareit.user.UserService;
 import ru.practicum.shareit.user.model.User;
+import ru.practicum.shareit.util.Constants;
+import ru.practicum.shareit.util.QPredicate;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
+
+import static ru.practicum.shareit.booking.model.QBooking.booking;
+import static ru.practicum.shareit.util.Constants.MSG_ITEM_WITH_ID_NOT_FOUND;
+import static ru.practicum.shareit.util.Constants.MSG_USER_WITH_ID_NOT_FOUND;
+import static ru.practicum.shareit.util.Constants.SORT_BY_START_DESC;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class BookingServiceImpl implements BookingService {
-    protected static final Sort SORT_BY_START_DESC = Sort.by("start").descending();
-    protected static final Sort SORT_BY_END_ASC = Sort.by("end").descending();
 
     private final UserService userService;
     private final BookingRepository repository;
@@ -35,47 +45,44 @@ public class BookingServiceImpl implements BookingService {
     private final UserRepository userRepository;
 
     @Override
+    @Transactional
     public BookingDto createBooking(long userId, BookingDto bookingDto) {
-        if (!validDates(bookingDto)) {
-            throw new RequestException(String.format("NotValid Dates", bookingDto.getItemId()));
+        if (!isStartBeforeEnd(bookingDto)) {
+            throw new ValidateException("Booking start date must be before end date.");
         }
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException(String.format("User with id=%d not found", userId)));
+        User user = userRepository.findById(userId).orElseThrow(
+                () -> new NotFoundException(String.format(MSG_USER_WITH_ID_NOT_FOUND, userId)));
 
-        Item item = itemRepository.findById(bookingDto.getItemId())
-                .orElseThrow(() -> new NotFoundException(String.format("Item with id=%d not found", bookingDto.getItemId())));
+        Item item = itemRepository.findById(bookingDto.getItemId()).orElseThrow(
+                () -> new NotFoundException(String.format(MSG_ITEM_WITH_ID_NOT_FOUND, bookingDto.getItemId())));
 
         if (item.getOwner().getId() == userId) {
-            throw new NotFoundException(String.format("Item with id=%d not found", bookingDto.getItemId()));
+            throw new NotFoundException("The owner cannot book his item");
         }
 
         if (!item.isAvailable()) {
-            throw new RequestException(String.format("Item with id=%d not found", bookingDto.getItemId()));
+            throw new AvailableException(String.format("Item with id=%d is not available", bookingDto.getItemId()));
         }
 
         Booking booking = repository.save(BookingMapping.toBooking(bookingDto, item, user));
         return BookingMapping.toDto(booking);
     }
 
-    private boolean validDates(BookingDto bookingDto) {
-        return bookingDto.getStart().isBefore(bookingDto.getEnd());
-    }
-
     @Override
+    @Transactional
     public BookingDto approveBooking(long userId, long bookingId, boolean isApproved) {
         if (repository.existsByIdAndBookerId(bookingId, userId)) {
-            throw new NotFoundException("Booker cannot change status");
+            throw new NotFoundException("Booker cannot change booking status");
         }
-//        Booking booking = repository.findById(bookingId)
-//        if (!repository.existsByIdAndOwnerAndStatus(bookingId, userId, BookingStatus.WAITING)) {
-//            throw new RequestException("No access");
-//        }
 
-        Booking booking = repository.findById(bookingId)
-                .orElseThrow(() -> new NotFoundException(String.format("Booking with id=%d not found", bookingId)));
+        Booking booking = repository.findById(bookingId).orElseThrow(
+                () -> new NotFoundException(String.format(Constants.MSG_BOOKING_WITH_ID_NOT_FOUND, bookingId)));
 
-        if (!BookingStatus.WAITING.equals(booking.getStatus()) || booking.getItem().getOwner().getId() != userId) {
-            throw new RequestException("No access");
+        if (!BookingStatus.WAITING.equals(booking.getStatus())) {
+            throw new RequestException("The booking status should be 'WAITING'");
+        }
+        if (booking.getItem().getOwner().getId() != userId) {
+            throw new NoAccessException(String.format("The user(id=%d) does not have access to approve booking.", userId));
         }
 
         booking.setStatus(isApproved ? BookingStatus.APPROVED : BookingStatus.REJECTED);
@@ -84,123 +91,116 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingDto> getAllByBooker(long userId, String state) {
+    @Transactional(readOnly = true)
+    public BookingDto getBookingByIdForUser(long userId, long bookingId) {
         if (!userService.existUser(userId)) {
-            throw new NotFoundException(String.format("User with id=%d not found", userId));
+            throw new NotFoundException(String.format(MSG_USER_WITH_ID_NOT_FOUND, userId));
         }
-        BookingState bookingState = getBookingState(state);
-        List<Booking> bookings = new ArrayList<>();
-        final LocalDateTime currentTime = LocalDateTime.now();
-        switch (bookingState) {
-            case ALL: {
-                bookings = repository.findAllByBookerId(userId, SORT_BY_START_DESC);
-                break;
-            }
-            case CURRENT: {
-                bookings = repository.findAllByBookerIdAndStartBeforeAndEndAfter(
-                        userId, currentTime, currentTime, SORT_BY_START_DESC);
-                break;
-            }
-            case PAST: {
-                bookings = repository.findAllByBookerIdAndEndBefore(
-                        userId, currentTime, SORT_BY_END_ASC);
-                break;
-            }
-            case FUTURE: {
-                bookings = repository.findAllByBookerIdAndStartAfter(
-                        userId, currentTime, SORT_BY_START_DESC);
-                break;
-            }
-            case WAITING: {
-                bookings = repository.findAllByBookerIdAndStatus(
-                        userId, BookingStatus.WAITING, SORT_BY_START_DESC);
-                break;
-            }
-            case REJECTED: {
-                bookings = repository.findAllByBookerIdAndStatus(
-                        userId, BookingStatus.REJECTED, SORT_BY_START_DESC);
-                break;
-            }
-        }
+        Booking booking = repository.findByIdAndBookerOrOwner(userId, bookingId).orElseThrow(
+                () -> new NotFoundException(String.format(Constants.MSG_BOOKING_WITH_ID_NOT_FOUND, bookingId)));
+        return BookingMapping.toDto(booking);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BookingDto> getAllByBooker(long userId, String state) {
+        Iterable<Booking> bookings = getBookingsByUserAndState(userId, state, false);
         return BookingMapping.toListDto(bookings);
 
     }
 
     @Override
-    public BookingDto getBookingByIdForUser(long userId, long bookingId) {
-        if (!userService.existUser(userId)) {
-            throw new NotFoundException(String.format("User with id=%d not found", userId));
-        }
-        Booking booking = repository.findByIdAndBookerOrOwner(userId, bookingId)
-                .orElseThrow(() -> new NotFoundException(String.format("Booking with id=%d not found", bookingId)));
-        return BookingMapping.toDto(booking);
-    }
-
-    @Override
-    public List<BookingDto> getByItemsOwner(long userId, String state) {
-        if (!userService.existUser(userId)) {
-            throw new NotFoundException(String.format("User with id=%d not found", userId));
-        }
-        BookingState bookingState = getBookingState(state);
-
-        Iterable<Booking> bookings = new ArrayList<>();
-        final LocalDateTime currentTime = LocalDateTime.now();
-        switch (bookingState) {
-            case ALL: {
-                BooleanExpression ex = QBooking.booking.item.owner.id.eq(userId);
-                bookings = repository.findAll(ex, SORT_BY_START_DESC);
-                break;
-            }
-            case CURRENT: {
-                BooleanExpression ex = QBooking.booking.item.owner.id.eq(userId)
-                        .and(QBooking.booking.start.before(currentTime))
-                        .and(QBooking.booking.end.after(currentTime));
-                bookings = repository.findAll(ex, SORT_BY_START_DESC);
-//                bookings = repository.findAllByOwnerAndStart(userId, currentTime);
-                break;
-            }
-            case PAST: {
-                BooleanExpression ex = QBooking.booking.item.owner.id.eq(userId)
-                        .and(QBooking.booking.end.before(currentTime));
-                bookings = repository.findAll(ex, SORT_BY_START_DESC);
-//                bookings = repository.findAllByOwnerAndStartBefore(userId, currentTime);
-                break;
-            }
-            case FUTURE: {
-                BooleanExpression ex = QBooking.booking.item.owner.id.eq(userId)
-                        .and(QBooking.booking.start.after(currentTime));
-                bookings = repository.findAll(ex, SORT_BY_START_DESC);
-//                bookings = repository.findAllByOwnerAndStartAfter(userId, currentTime);
-                break;
-            }
-            case WAITING: {
-                BooleanExpression ex = QBooking.booking.item.owner.id.eq(userId)
-                        .and(QBooking.booking.status.eq(BookingStatus.WAITING));
-                bookings = repository.findAll(ex, SORT_BY_START_DESC);
-//                bookings = repository.findAllByOwnerAndStatus(userId, BookingStatus.WAITING, SORT_BY_START_DESC);
-                break;
-            }
-            case REJECTED: {
-                BooleanExpression ex = QBooking.booking.item.owner.id.eq(userId)
-                        .and(QBooking.booking.status.eq(BookingStatus.REJECTED));
-                bookings = repository.findAll(ex, SORT_BY_START_DESC);
-//                bookings = repository.findAllByOwnerAndStatus(userId, BookingStatus.REJECTED, SORT_BY_START_DESC);
-                break;
-            }
-        }
+    @Transactional(readOnly = true)
+    public List<BookingDto> getAllByOwner(long userId, String state) {
+        Iterable<Booking> bookings = getBookingsByUserAndState(userId, state, true);
         return BookingMapping.toListDto(bookings);
 
     }
 
     @NotNull
-    private static BookingState getBookingState(String state) {
+    private Iterable<Booking> getBookingsByUserAndState(long userId, String state, boolean isUserOwner) {
+        if (!userService.existUser(userId)) {
+            throw new NotFoundException(String.format(MSG_USER_WITH_ID_NOT_FOUND, userId));
+        }
+        BookingState bookingState = getBookingState(state);
+        BookingFilter filter = getFilter(isUserOwner, userId, bookingState);
+        return getBookingsByFilter(filter, SORT_BY_START_DESC);
+    }
+
+    private BookingFilter getFilter(boolean isUserOwner, long userId, BookingState bookingState) {
+        final LocalDateTime currentTime = LocalDateTime.now();
+        switch (bookingState) {
+            case CURRENT: {
+                return BookingFilter.builder()
+                        .owner(isUserOwner ? userId : null)
+                        .booker(isUserOwner ? null : userId)
+                        .startBefore(currentTime)
+                        .endAfter(currentTime)
+                        .build();
+            }
+            case PAST: {
+                return BookingFilter.builder()
+                        .owner(isUserOwner ? userId : null)
+                        .booker(isUserOwner ? null : userId)
+                        .endBefore(currentTime)
+                        .build();
+            }
+            case FUTURE: {
+                return BookingFilter.builder()
+                        .owner(isUserOwner ? userId : null)
+                        .booker(isUserOwner ? null : userId)
+                        .startAfter(currentTime)
+                        .build();
+            }
+            case WAITING: {
+                return BookingFilter.builder()
+                        .owner(isUserOwner ? userId : null)
+                        .booker(isUserOwner ? null : userId)
+                        .status(BookingStatus.WAITING)
+                        .build();
+            }
+            case REJECTED: {
+                return BookingFilter.builder()
+                        .owner(isUserOwner ? userId : null)
+                        .booker(isUserOwner ? null : userId)
+                        .status(BookingStatus.REJECTED)
+                        .build();
+            }
+            /* for state = ALL */
+            default: {
+                return BookingFilter.builder()
+                        .owner(isUserOwner ? userId : null)
+                        .booker(isUserOwner ? null : userId)
+                        .build();
+            }
+        }
+    }
+
+    @NotNull
+    private Iterable<Booking> getBookingsByFilter(BookingFilter filter, Sort order) {
+        final Predicate predicate = QPredicate.builder()
+                .add(filter.getBooker(), booking.booker.id::eq)
+                .add(filter.getItem(), booking.item.id::eq)
+                .add(filter.getOwner(), booking.item.owner.id::eq)
+                .add(filter.getStartBefore(), booking.start::before)
+                .add(filter.getEndBefore(), booking.end::before)
+                .add(filter.getStartAfter(), booking.start::after)
+                .add(filter.getEndAfter(), booking.end::after)
+                .add(filter.getStatus(), booking.status::eq)
+                .buildAnd();
+        return repository.findAll(predicate, order);
+    }
+
+    @NotNull
+    private BookingState getBookingState(String state) {
         try {
-            return BookingState.valueOf(state);
-        } catch (Exception ex) {
+            return BookingState.valueOf(state.toUpperCase());
+        } catch (IllegalArgumentException ex) {
             throw new RequestException("Unknown state: " + state);
         }
-        /*
-        * return BookingState.from(state)
-                .orElseThrow(() -> new RequestException(String.format("Unknown state: %s", state)));*/
+    }
+
+    private boolean isStartBeforeEnd(BookingDto bookingDto) {
+        return bookingDto.getStart().isBefore(bookingDto.getEnd());
     }
 }

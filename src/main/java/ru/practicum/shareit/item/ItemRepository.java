@@ -19,41 +19,22 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
     List<Item> findAllByOwnerId(Long owner);
 
     /**
-     * Check item with itemId is existing in storage for owner with userId
-     * @param id item's id
-     * @param owner owner's id
-     * @return true or false
+     * Find by id and owner
+     * @param itemId item
+     * @param userId owner
+     * @return item
      */
-    boolean existsByIdAndOwnerId(long id, long owner);
+    Optional<Item> findByIdAndOwnerId(long itemId, long userId);
 
     /**
      * Returns a collection of items for search substring by name or description
      * @param text search substring
      * @return collection of items
      */
-    @Query(value = "select it.* from items it " +
+    @Query("select it from Item it " +
             "where it.available=true and " +
-            "(UPPER(it.name) like UPPER(concat('%', :text,'%')) or UPPER(it.description) like UPPER(concat('%', :text,'%')))",
-            nativeQuery = true
+            "(UPPER(it.name) like UPPER(concat('%', :text,'%')) or " +
+            "UPPER(it.description) like UPPER(concat('%', :text,'%')))"
     )
     List<Item> findAllByNameOrDescriptionIgnoreCase(@Param("text") String text);
-
-    boolean existsByIdAndAvailable(long id, boolean available);
-
-    boolean existsByIdAndAvailableAndOwnerIdNot(long itemId, boolean available, long userId);
-
-    boolean existsByIdAndOwnerIdNot(long itemId, long userId);
-
-//    @Query("select it from Item it " +
-//       //     "left join Booking b on it.id = b.item " +
-//            "where it.id = ?1")
-//    Optional<Item> findByIdWithBooking(long itemId);
-
-    /**
-     * Find By Id and Owner
-     * @param itemId
-     * @param userId
-     * @return
-     */
-    Optional<Item> findByIdAndOwnerId(long itemId, long userId);
 }

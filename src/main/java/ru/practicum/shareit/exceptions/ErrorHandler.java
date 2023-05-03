@@ -17,8 +17,7 @@ public class ErrorHandler {
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public Map<String, String> handleValidationExceptions(
-            MethodArgumentNotValidException ex) {
+    public Map<String, String> handleValidationExceptions(MethodArgumentNotValidException ex) {
         String format = "'%s' -> %s";
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getAllErrors().forEach(error -> {
@@ -34,8 +33,8 @@ public class ErrorHandler {
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public String handleNotFoundError(final NotFoundException e) {
-        return e.getMessage();
+    public ErrorResponse handleNotFoundError(final NotFoundException e) {
+        return new ErrorResponse(e.getMessage());
     }
 
     @ExceptionHandler
@@ -45,9 +44,27 @@ public class ErrorHandler {
     }
 
     @ExceptionHandler
-    @ResponseStatus(HttpStatus.FORBIDDEN)
-    public String handleNotFoundError(final ValidateException e) {
-        return e.getMessage();
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleNoAccessError(final NoAccessException e) {
+        return new ErrorResponse(e.getMessage());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleAvailableError(final AvailableException e) {
+        return new ErrorResponse(e.getMessage());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleForbiddenError(final ConflictException e) {
+        return new ErrorResponse(e.getMessage());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleValidateError(final ValidateException e) {
+        return new ErrorResponse(e.getMessage());
     }
 
     @ExceptionHandler

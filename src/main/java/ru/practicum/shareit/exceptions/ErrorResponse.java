@@ -1,6 +1,7 @@
 package ru.practicum.shareit.exceptions;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ErrorResponse {
-    private final String error;
+    @JsonProperty("error")
+    private final String message;
     private String description;
 }

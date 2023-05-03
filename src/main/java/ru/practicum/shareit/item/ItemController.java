@@ -34,7 +34,8 @@ public class ItemController {
 
     @GetMapping
     public Collection<ItemDto> getAll(@RequestHeader("X-Sharer-User-Id") long userId) {
-        log.debug("Request received GET '/items'  for userId = {}", userId);
+        log.debug("Request received GET '/items'");
+        log.debug("X-Sharer-User-Id={}", userId);
         return service.getAllByOwner(userId);
     }
 
@@ -43,6 +44,7 @@ public class ItemController {
             @RequestHeader("X-Sharer-User-Id") long userId,
             @PathVariable(name = "itemId") long itemId) {
         log.debug("Request received GET '/items/{}'", itemId);
+        log.debug("X-Sharer-User-Id={}", userId);
         return service.getById(itemId, userId);
     }
 
@@ -50,17 +52,19 @@ public class ItemController {
     @ResponseStatus(HttpStatus.CREATED)
     public ItemDto create(
             @RequestHeader(value = "X-Sharer-User-Id", required = false) long userId,
-            @Valid @RequestBody ItemDto item) {
-        log.debug("Request received POST '/items' for userId = {} : {}", userId, item);
-        return service.create(item, userId);
+            @Valid @RequestBody ItemDto itemDto) {
+        log.debug("Request received POST '/items' : {}", itemDto);
+        log.debug("X-Sharer-User-Id={}", userId);
+        return service.create(itemDto, userId);
     }
 
     @PatchMapping("/{itemId}")
     public ItemDto update(@RequestHeader(value = "X-Sharer-User-Id", required = false) long userId,
                           @PathVariable(name = "itemId") long itemId,
-                          @RequestBody ItemDto item) {
-        log.debug("Request received PATCH '/items/{}' for userId = {}", itemId, userId);
-        return service.update(item, itemId, userId);
+                          @RequestBody ItemDto itemDto) {
+        log.debug("Request received PATCH '/items/{}' : {}", itemId, itemDto);
+        log.debug("X-Sharer-User-Id={}", userId);
+        return service.update(itemDto, itemId, userId);
     }
 
     @GetMapping("/search")
@@ -68,7 +72,7 @@ public class ItemController {
             @RequestHeader(value = "X-Sharer-User-Id", required = false) long userId,
             @RequestParam(name = "text") String text) {
         log.debug("Request received GET '/items/search?text={}'", text);
-        log.debug("X-Sharer-User-Id={}'", userId);
+        log.debug("X-Sharer-User-Id={}", userId);
         if (text.isBlank()) {
             log.debug("Parameter 'text' is empty");
             return Collections.emptyList();
@@ -82,6 +86,6 @@ public class ItemController {
                                           @Valid @RequestBody CommentDto commentDto) {
         log.debug("Request received POST '/items/{}/comment' : {}", itemId, commentDto);
         log.debug("X-Sharer-User-Id={}'", userId);
-        return service.createComment(userId, itemId, commentDto);
+        return service.addComment(userId, itemId, commentDto);
     }
 }

@@ -1,11 +1,14 @@
 package ru.practicum.shareit.item.dto;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.model.User;
 
 import java.time.LocalDateTime;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class CommentMapper {
 
     public static CommentDto toDto(Comment comment) {
@@ -26,11 +29,4 @@ public class CommentMapper {
                 .created(LocalDateTime.now())
                 .build();
     }
-
-//    public static List<CommentDto> toListDto(List<Comment> list) {
-//        if (list.isEmpty()) return Collections.emptyList();
-//        return list.stream()
-//                .map(CommentMapper::toDto)
-//                .collect(Collectors.toList());
-//    }
 }

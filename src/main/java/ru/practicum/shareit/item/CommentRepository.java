@@ -12,7 +12,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
      * @param itemId
      * @return
      */
-    List<Comment> findByItemId(long itemId);
+    List<Comment> findAllByItemId(long itemId);
 
     /**
      * Find all comments for items

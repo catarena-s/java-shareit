@@ -7,7 +7,7 @@ import lombok.Setter;
 
 @Setter
 @Getter
-@Builder(toBuilder = true)
+@Builder
 public class UserShort {
     private long id;
 }

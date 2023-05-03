@@ -34,7 +34,7 @@ public class BookingController {
             @RequestHeader(value = "X-Sharer-User-Id", required = false) long userId,
             @Valid @RequestBody BookingDto booking) {
         log.debug("Request received POST '/bookings' : {}", booking);
-        log.debug("X-Sharer-User-Id={}'", userId);
+        log.debug("X-Sharer-User-Id={}", userId);
         return service.createBooking(userId, booking);
     }
 
@@ -45,7 +45,7 @@ public class BookingController {
             @RequestParam(name = "approved", required = false) boolean isApproved
     ) {
         log.debug("Request received PATCH '/bookings/{}?approve={}'", bookingId, isApproved);
-        log.debug("X-Sharer-User-Id={}'", userId);
+        log.debug("X-Sharer-User-Id={}", userId);
         return service.approveBooking(userId, bookingId, isApproved);
     }
 
@@ -55,7 +55,7 @@ public class BookingController {
             @RequestParam(name = "state", defaultValue = "ALL", required = false) String state
     ) {
         log.debug("Request received GET '/bookings?state={}'", state);
-        log.debug("X-Sharer-User-Id={}'", userId);
+        log.debug("X-Sharer-User-Id={}", userId);
         return service.getAllByBooker(userId, state);
     }
 
@@ -63,15 +63,15 @@ public class BookingController {
     List<BookingDto> getAllByOwner(@RequestHeader(value = "X-Sharer-User-Id", required = false) long userId,
                                    @RequestParam(name = "state", defaultValue = "ALL", required = false) String state) {
         log.debug("Request received GET '/bookings/owner?state={}'", state);
-        log.debug("X-Sharer-User-Id={}'", userId);
-        return service.getByItemsOwner(userId, state);
+        log.debug("X-Sharer-User-Id={}", userId);
+        return service.getAllByOwner(userId, state);
     }
 
     @GetMapping("/{bookingId}")
     BookingDto getBookingByIdForUser(@RequestHeader(value = "X-Sharer-User-Id", required = false) long userId,
                                      @PathVariable(name = "bookingId") long bookingId) {
         log.debug("Request received GET '/bookings/{}'", bookingId);
-        log.debug("X-Sharer-User-Id={}'", userId);
+        log.debug("X-Sharer-User-Id={}", userId);
         return service.getBookingByIdForUser(userId, bookingId);
     }
 }
