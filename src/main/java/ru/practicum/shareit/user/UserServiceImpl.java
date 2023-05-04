@@ -1,6 +1,7 @@
 package ru.practicum.shareit.user;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.exceptions.ConflictException;
@@ -28,8 +29,12 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserDto create(UserDto user) {
-        User newUser = repository.save(UserMapper.toUser(user));
-        return UserMapper.toUserDto(newUser);
+        try {
+            User newUser = repository.save(UserMapper.toUser(user));
+            return UserMapper.toUserDto(newUser);
+        } catch (DataIntegrityViolationException ex) {
+            throw new ConflictException(String.format("User with email='%s' already exists", user.getEmail()));
+        }
     }
 
     @Override
@@ -50,17 +55,6 @@ public class UserServiceImpl implements UserService {
         return UserMapper.toUserDto(updatedUser);
     }
 
-    private boolean isExistsOtherUserWithEmail(UserDto userDto, long userId) {
-        return repository.existsByIdNotAndEmail(userId, userDto.getEmail());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public boolean existUser(long userId) {
-        return repository.existsById(userId);
-    }
-
-
     @Override
     @Transactional(readOnly = true)
     public UserDto getById(long userId) {
@@ -76,5 +70,14 @@ public class UserServiceImpl implements UserService {
             throw new NotFoundException(String.format(MSG_USER_WITH_ID_NOT_FOUND, userId));
         }
         repository.deleteById(userId);
+    }
+
+    @Override
+    public boolean existUser(long userId) {
+        return repository.existsById(userId);
+    }
+
+    private boolean isExistsOtherUserWithEmail(UserDto userDto, long userId) {
+        return repository.existsByIdNotAndEmail(userId, userDto.getEmail());
     }
 }

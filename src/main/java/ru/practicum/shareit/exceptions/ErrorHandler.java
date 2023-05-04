@@ -57,7 +57,7 @@ public class ErrorHandler {
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.CONFLICT)
-    public ErrorResponse handleForbiddenError(final ConflictException e) {
+    public ErrorResponse handleConflictException(final ConflictException e) {
         return new ErrorResponse(e.getMessage());
     }
 
@@ -69,9 +69,9 @@ public class ErrorHandler {
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public String handleInternalServerError(final Throwable e) {
+    public ErrorResponse handleInternalServerError(final Throwable e) {
         String messageErr = String.format("An unexpected error has occurred: %s", e.getMessage());
         log.error(messageErr);
-        return messageErr;
+        return new ErrorResponse(messageErr);
     }
 }

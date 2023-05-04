@@ -12,7 +12,7 @@ import java.util.function.Function;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class QPredicate {
 
-    private List<Predicate> predicates = new ArrayList<>();
+    private final List<Predicate> predicates = new ArrayList<>();
 
     public <T> QPredicate add(T object, Function<T, Predicate> function) {
         if (object != null) {
