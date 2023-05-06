@@ -21,4 +21,11 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
      */
     List<Comment> findAllByItemIn(List<Item> items);
 
+    /**
+     * Check for a comment on an item from the user
+     * @param itemId
+     * @param userId
+     * @return true or false
+     */
+    boolean existsByItemIdAndAuthorId(long itemId, long userId);
 }

@@ -147,8 +147,15 @@ public class ItemServiceImpl implements ItemService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException(String.format(MSG_USER_WITH_ID_NOT_FOUND, userId)));
 
-        Item item = bookingRepository.findByItemIdAndBookerIdAndStartBefore(itemId, userId, LocalDateTime.now())
-                .orElseThrow(() -> new RequestException(String.format("User(id=%d) has never booked the item(id=%d)", userId, itemId)));
+        if (commentRepository.existsByItemIdAndAuthorId(itemId, userId)) {
+            throw new RequestException(String.format(
+                    "Comment for item(id=%d) from user(id=%d) already exists", itemId, userId));
+        }
+
+        Item item = bookingRepository.findByItemIdAndBookerIdAndEndBefore(itemId, userId, LocalDateTime.now())
+                .orElseThrow(() -> new RequestException(String.format(
+                        "User(id=%d) has never booked the item(id=%d)", userId, itemId)));
+
 
         Comment comment = commentRepository.save(CommentMapper.toComment(commentDto, user, item));
         return CommentMapper.toDto(comment);

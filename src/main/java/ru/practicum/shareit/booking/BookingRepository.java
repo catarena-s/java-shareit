@@ -72,8 +72,23 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, Queryds
      * @return item
      */
     @Query("select b.item from Booking b " +
-            "where b.item.id=:itemId and b.booker.id= :bookerId and b.start < :now")
-    Optional<Item> findByItemIdAndBookerIdAndStartBefore(@Param("itemId") long itemId,
-                                                         @Param("bookerId") long bookerId,
-                                                         @Param("now") LocalDateTime now);
+            "where b.item.id=:itemId and b.booker.id= :bookerId and b.end < :now")
+    Optional<Item> findByItemIdAndBookerIdAndEndBefore(@Param("itemId") long itemId,
+                                                       @Param("bookerId") long bookerId,
+                                                       @Param("now") LocalDateTime now);
+
+    /**
+     * Check for an approved booking for an item with a time crossing
+     * @param itemId
+     * @param start booking start time
+     * @param end booking end time
+     * @return true or false
+     */
+    @Query("select case when count(b)> 0 then true else false end from Booking b " +
+            "where  b.item.id = :itemId and" +
+            "((:start between b.start and  b.end) or (:end between b.start and  b.end)) and " +
+            "b.status = 'APPROVED'")
+    boolean existsApprovedBookingForItemWithCrossTime(@Param("itemId") long itemId,
+                                                      @Param("start") LocalDateTime start,
+                                                      @Param("end") LocalDateTime end);
 }

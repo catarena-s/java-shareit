@@ -64,6 +64,13 @@ public class BookingServiceImpl implements BookingService {
             throw new AvailableException(String.format("Item with id=%d is not available", bookingDto.getItemId()));
         }
 
+        if (repository.existsApprovedBookingForItemWithCrossTime(bookingDto.getItemId(), bookingDto.getStart(), bookingDto.getEnd())) {
+            throw new AvailableException(String.format(
+                    "Booking item(id=%d) is not available for dates from %s to %s",
+                    bookingDto.getItemId(), bookingDto.getStart(), bookingDto.getEnd()
+            ));
+        }
+
         Booking booking = repository.save(BookingMapping.toBooking(bookingDto, item, user));
         return BookingMapping.toDto(booking);
     }
@@ -71,18 +78,26 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public BookingDto approveBooking(long userId, long bookingId, boolean isApproved) {
-        if (repository.existsByIdAndBookerId(bookingId, userId)) {
-            throw new NotFoundException("Booker cannot change booking status");
-        }
-
         Booking booking = repository.findById(bookingId).orElseThrow(
                 () -> new NotFoundException(String.format(Constants.MSG_BOOKING_WITH_ID_NOT_FOUND, bookingId)));
 
+        if (booking.getBooker().getId() == userId) {
+            throw new NotFoundException("Booker cannot change booking status");
+        }
         if (!BookingStatus.WAITING.equals(booking.getStatus())) {
             throw new RequestException("The booking status should be 'WAITING'");
         }
         if (booking.getItem().getOwner().getId() != userId) {
             throw new NoAccessException(String.format("The user(id=%d) does not have access to approve booking.", userId));
+        }
+        if (booking.getEnd().isBefore(LocalDateTime.now())) {
+            throw new NoAccessException("You cannot confirm a booking that has already expired");
+        }
+        if (repository.existsApprovedBookingForItemWithCrossTime(booking.getItem().getId(), booking.getStart(), booking.getEnd())) {
+            throw new AvailableException(String.format(
+                    "Booking(id=%d) for item(id=%d) is not available for approve for dates from %s to %s",
+                    bookingId, booking.getItem().getId(), booking.getStart(), booking.getEnd()
+            ));
         }
 
         booking.setStatus(isApproved ? BookingStatus.APPROVED : BookingStatus.REJECTED);
@@ -129,49 +144,40 @@ public class BookingServiceImpl implements BookingService {
 
     private BookingFilter getFilter(boolean isUserOwner, long userId, BookingState bookingState) {
         final LocalDateTime currentTime = LocalDateTime.now();
+        final BookingFilter bookingFilter = BookingFilter.builder()
+                .owner(isUserOwner ? userId : null)
+                .booker(isUserOwner ? null : userId)
+                .build();
         switch (bookingState) {
             case CURRENT: {
-                return BookingFilter.builder()
-                        .owner(isUserOwner ? userId : null)
-                        .booker(isUserOwner ? null : userId)
+                return bookingFilter.toBuilder()
                         .startBefore(currentTime)
                         .endAfter(currentTime)
                         .build();
             }
             case PAST: {
-                return BookingFilter.builder()
-                        .owner(isUserOwner ? userId : null)
-                        .booker(isUserOwner ? null : userId)
+                return bookingFilter.toBuilder()
                         .endBefore(currentTime)
                         .build();
             }
             case FUTURE: {
-                return BookingFilter.builder()
-                        .owner(isUserOwner ? userId : null)
-                        .booker(isUserOwner ? null : userId)
+                return bookingFilter.toBuilder()
                         .startAfter(currentTime)
                         .build();
             }
             case WAITING: {
-                return BookingFilter.builder()
-                        .owner(isUserOwner ? userId : null)
-                        .booker(isUserOwner ? null : userId)
+                return bookingFilter.toBuilder()
                         .status(BookingStatus.WAITING)
                         .build();
             }
             case REJECTED: {
-                return BookingFilter.builder()
-                        .owner(isUserOwner ? userId : null)
-                        .booker(isUserOwner ? null : userId)
+                return bookingFilter.toBuilder()
                         .status(BookingStatus.REJECTED)
                         .build();
             }
             /* for state = ALL */
             default: {
-                return BookingFilter.builder()
-                        .owner(isUserOwner ? userId : null)
-                        .booker(isUserOwner ? null : userId)
-                        .build();
+                return bookingFilter;
             }
         }
     }

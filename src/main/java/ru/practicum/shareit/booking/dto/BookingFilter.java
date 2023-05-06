@@ -7,7 +7,7 @@ import ru.practicum.shareit.booking.enums.BookingStatus;
 import java.time.LocalDateTime;
 
 @Getter
-@Builder
+@Builder(toBuilder = true)
 public class BookingFilter {
     private Long booker;
     private Long owner;
