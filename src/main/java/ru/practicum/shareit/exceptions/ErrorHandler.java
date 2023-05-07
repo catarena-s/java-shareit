@@ -17,8 +17,7 @@ public class ErrorHandler {
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public Map<String, String> handleValidationExceptions(
-            MethodArgumentNotValidException ex) {
+    public Map<String, String> handleValidationExceptions(MethodArgumentNotValidException ex) {
         String format = "'%s' -> %s";
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getAllErrors().forEach(error -> {
@@ -34,21 +33,45 @@ public class ErrorHandler {
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public String handleNotFoundError(final NotFoundException e) {
-        return e.getMessage();
+    public ErrorResponse handleNotFoundError(final NotFoundException e) {
+        return new ErrorResponse(e.getMessage());
     }
 
     @ExceptionHandler
-    @ResponseStatus(HttpStatus.FORBIDDEN)
-    public String handleNotFoundError(final ValidateException e) {
-        return e.getMessage();
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleError(final RequestException e) {
+        return new ErrorResponse(e.getMessage());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleNoAccessError(final NoAccessException e) {
+        return new ErrorResponse(e.getMessage());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleAvailableError(final AvailableException e) {
+        return new ErrorResponse(e.getMessage());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleConflictException(final ConflictException e) {
+        return new ErrorResponse(e.getMessage());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleValidateError(final ValidateException e) {
+        return new ErrorResponse(e.getMessage());
     }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public String handleInternalServerError(final Throwable e) {
+    public ErrorResponse handleInternalServerError(final Throwable e) {
         String messageErr = String.format("An unexpected error has occurred: %s", e.getMessage());
         log.error(messageErr);
-        return messageErr;
+        return new ErrorResponse(messageErr);
     }
 }

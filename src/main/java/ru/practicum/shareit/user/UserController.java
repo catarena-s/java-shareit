@@ -17,10 +17,6 @@ import ru.practicum.shareit.user.dto.UserDto;
 import javax.validation.Valid;
 import java.util.Collection;
 
-/**
- * TODO Sprint add-controllers.
- */
-
 @Slf4j
 @RestController
 @RequestMapping("/users")
@@ -43,17 +39,17 @@ public class UserController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public UserDto create(
-            @Valid @RequestBody UserDto user) {
-        log.debug("Request received POST '/users' for userId = {} : {}", user);
-        return service.create(user);
+            @Valid @RequestBody UserDto userDto) {
+        log.debug("Request received POST '/users' : {}", userDto);
+        return service.create(userDto);
     }
 
     @PatchMapping("/{userId}")
     public UserDto update(
             @PathVariable(name = "userId") long userId,
-            @RequestBody UserDto user) {
-        log.debug("Request received PATCH '/items/{}' : {}", userId, user);
-        return service.update(user, userId);
+            @RequestBody UserDto userDto) {
+        log.debug("Request received PATCH '/items/{}' : {}", userId, userDto);
+        return service.update(userDto, userId);
     }
 
     @DeleteMapping("/{userId}")

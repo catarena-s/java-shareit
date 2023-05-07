@@ -1,70 +1,83 @@
 package ru.practicum.shareit.user;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.shareit.exceptions.ConflictException;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.dto.UserMapper;
+import ru.practicum.shareit.user.model.User;
 
-import javax.validation.ValidationException;
 import java.util.Collection;
-import java.util.stream.Collectors;
+
+import static ru.practicum.shareit.util.Constants.MSG_USER_WITH_ID_NOT_FOUND;
 
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-    private final UserRepository storage;
+    private final UserRepository repository;
 
     @Override
-    public Collection<ru.practicum.shareit.user.dto.UserDto> getAll() {
-        return storage.getAll()
-                .stream()
-                .map(UserMapper::toUserDto)
-                .collect(Collectors.toList());
+    @Transactional(readOnly = true)
+    public Collection<UserDto> getAll() {
+        return UserMapper.toListDto(repository.findAll());
     }
 
     @Override
+    @Transactional
     public UserDto create(UserDto user) {
-        if (storage.existEmail(user.getEmail())) {
-            throw new ValidationException(String.format("User with email='%s' already exist", user.getEmail()));
+        try {
+            User newUser = repository.save(UserMapper.toUser(user));
+            return UserMapper.toUserDto(newUser);
+        } catch (DataIntegrityViolationException ex) {
+            throw new ConflictException(String.format("User with email='%s' already exists", user.getEmail()));
         }
-        User newUser = storage.create(user);
-        return UserMapper.toUserDto(newUser);
     }
 
     @Override
-    public UserDto update(UserDto user, long userId) {
-        if (!existUser(userId)) {
-            throw new NotFoundException(String.format("User with id=%s not found", userId));
+    @Transactional
+    public UserDto update(UserDto userDto, long userId) {
+        if (userDto.getEmail() != null && isExistsOtherUserWithEmail(userDto, userId)) {
+            throw new ConflictException(String.format("Another user already exists with email = '%s'", userDto.getEmail()));
         }
-        if (user.getEmail() != null && storage.existEmail(user.getEmail(), userId)) {
-            throw new ValidationException(String.format("Other user with email='%s' already exist", user.getEmail()));
-        }
+        User user = repository.findById(userId)
+                .orElseThrow(() -> new NotFoundException(String.format(MSG_USER_WITH_ID_NOT_FOUND, userId)));
 
-        User updatedUser = storage.update(user, userId);
+        if (userDto.getName() != null) {
+            user.setName(userDto.getName());
+        }
+        if (userDto.getEmail() != null)
+            user.setEmail(userDto.getEmail());
+        User updatedUser = repository.save(user);
         return UserMapper.toUserDto(updatedUser);
     }
 
     @Override
-    public boolean existUser(long userId) {
-        return storage.existUser(userId);
-    }
-
-
-    @Override
+    @Transactional(readOnly = true)
     public UserDto getById(long userId) {
-        if (!existUser(userId)) {
-            throw new NotFoundException(String.format("User with id=%s not found", userId));
-        }
-        return UserMapper.toUserDto(storage.getById(userId));
+        User user = repository.findById(userId)
+                .orElseThrow(() -> new NotFoundException(String.format(MSG_USER_WITH_ID_NOT_FOUND, userId)));
+        return UserMapper.toUserDto(user);
     }
 
     @Override
+    @Transactional
     public void delete(long userId) {
         if (!existUser(userId)) {
-            throw new NotFoundException(String.format("User with id = %s not found", userId));
+            throw new NotFoundException(String.format(MSG_USER_WITH_ID_NOT_FOUND, userId));
         }
-        storage.delete(userId);
+        repository.deleteById(userId);
+    }
+
+    @Override
+    public boolean existUser(long userId) {
+        return repository.existsById(userId);
+    }
+
+    private boolean isExistsOtherUserWithEmail(UserDto userDto, long userId) {
+        return repository.existsByIdNotAndEmail(userId, userDto.getEmail());
     }
 }

@@ -1,5 +1,6 @@
 package ru.practicum.shareit.item;
 
+import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 
 import java.util.Collection;
@@ -15,14 +16,15 @@ public interface ItemService {
 
     /**
      * Get item by id
-     * @param itemId
+     * @param itemId item id
+     * @param userId user id
      * @return item, converted to DTO
      */
-    ItemDto getById(long itemId);
+    ItemDto getById(long itemId, long userId);
 
     /**
      * Create new item
-     * @param item
+     * @param item - item
      * @param userId - item's owner
      * @return new item, converted to DTO
      */
@@ -43,4 +45,13 @@ public interface ItemService {
      * @return collection of items, converted to DTO
      */
     List<ItemDto> search(String text);
+
+    /**
+     * Create comment for item
+     * @param userId user had booked
+     * @param itemId item
+     * @param commentDto comment
+     * @return comment, converted to DTO
+     */
+    CommentDto addComment(long userId, long itemId, CommentDto commentDto);
 }
