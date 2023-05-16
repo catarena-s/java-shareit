@@ -1,5 +1,6 @@
 package ru.practicum.shareit.item;
 
+import org.springframework.data.domain.PageRequest;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 
@@ -10,9 +11,10 @@ public interface ItemService {
     /**
      * Get all items by owner
      * @param userId owner id
+     * @param page
      * @return collection of items, converted to DTO
      */
-    Collection<ItemDto> getAllByOwner(long userId);
+    Collection<ItemDto> getAllByOwner(long userId, PageRequest page);
 
     /**
      * Get item by id
@@ -42,9 +44,10 @@ public interface ItemService {
     /**
      * Returns a collection of items for search substring by name or description
      * @param text - search substring
+     * @param page
      * @return collection of items, converted to DTO
      */
-    List<ItemDto> search(String text);
+    List<ItemDto> search(String text, PageRequest page);
 
     /**
      * Create comment for item

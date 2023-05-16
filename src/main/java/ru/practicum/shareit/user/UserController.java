@@ -2,6 +2,7 @@ package ru.practicum.shareit.user;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,11 +11,14 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.util.Constants;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Min;
 import java.util.Collection;
 
 @Slf4j
@@ -25,9 +29,14 @@ public class UserController {
     private final UserService service;
 
     @GetMapping
-    public Collection<UserDto> getAll() {
+    public Collection<UserDto> getAll(@RequestParam(name = "from", required = false) @Min(0) Integer from,
+                                      @RequestParam(name = "size", required = false) @Min(1) Integer size) {
         log.debug("Request received GET '/users'");
-        return service.getAll();
+        if (from == null) {
+            return service.getAll(null);
+        }
+        final PageRequest page = PageRequest.of(from / size, size, Constants.SORT_BY_ID_ACS);
+        return service.getAll(page);
     }
 
     @GetMapping("/{userId}")
@@ -48,7 +57,7 @@ public class UserController {
     public UserDto update(
             @PathVariable(name = "userId") long userId,
             @RequestBody UserDto userDto) {
-        log.debug("Request received PATCH '/items/{}' : {}", userId, userDto);
+        log.debug("Request received PATCH '/users/{}' : {}", userId, userDto);
         return service.update(userDto, userId);
     }
 
