@@ -5,6 +5,8 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Sort;
 
 import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class Constants {
@@ -19,4 +21,5 @@ public class Constants {
     public static final Sort SORT_BY_START_ASC = Sort.by(Sort.Direction.ASC, "start");
     public static final Sort SORT_BY_START_DESC = Sort.by(Sort.Direction.DESC, "start");
     public static final Sort SORT_BY_REQUEST_CREATE_DATE_DESC = Sort.by(Sort.Direction.DESC, "created");
+    public static final Clock TEST_CLOCK = Clock.fixed(Instant.now(), ZoneId.of("UTC"));
 }

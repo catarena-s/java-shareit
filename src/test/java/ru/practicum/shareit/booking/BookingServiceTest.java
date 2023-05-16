@@ -27,6 +27,7 @@ import ru.practicum.shareit.user.UserService;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.util.Constants;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -51,7 +52,6 @@ import static ru.practicum.shareit.util.Constants.SORT_BY_START_DESC;
 
 @ExtendWith(MockitoExtension.class)
 class BookingServiceTest {
-
     @Mock
     private UserService userService;
     @Mock
@@ -60,16 +60,17 @@ class BookingServiceTest {
     private ItemRepository itemRepository;
     @Mock
     private UserRepository userRepository;
-
+    private final Clock clock = Constants.TEST_CLOCK;
     @InjectMocks
     private BookingServiceImpl bookingService;
     private List<User> userList;
     private List<Item> itemList;
     private List<Booking> bookingList;
+    private LocalDateTime currentTime;
 
     @BeforeEach
     void setUp() {
-
+        bookingService.setClock(clock);
         userList = List.of(
                 makeUser(1L, "Jon", "jon@mail.ru"),
                 makeUser(2L, "Jane", "jane@mail.ru"),
@@ -83,7 +84,7 @@ class BookingServiceTest {
                 makeItem(4L, "item4", "item4 description", false, userList.get(0), null)
         );
 
-        final LocalDateTime currentTime = LocalDateTime.now();
+        currentTime = LocalDateTime.now(clock);
         bookingList = List.of(
                 makeBooking(1L, itemList.get(0), userList.get(1), currentTime.minusDays(2), currentTime.plusDays(1), WAITING),
                 makeBooking(2L, itemList.get(0), userList.get(2), currentTime.minusDays(2), currentTime.plusDays(1), WAITING),
@@ -102,8 +103,8 @@ class BookingServiceTest {
         final long bookerId = booker.getId();
         final Item item = itemList.get(0);
         final long itemId = item.getId();
-        final LocalDateTime start = LocalDateTime.now().minusDays(2);
-        final LocalDateTime end = LocalDateTime.now().plusDays(1);
+        final LocalDateTime start = currentTime.minusDays(2);
+        final LocalDateTime end = currentTime.plusDays(1);
         final Booking newBooking = Booking.builder()
                 .booker(booker)
                 .item(item)
@@ -139,8 +140,8 @@ class BookingServiceTest {
         final long bookerId = booker.getId();
         final Item item = itemList.get(0);
         final long itemId = item.getId();
-        final LocalDateTime start = LocalDateTime.now().plusDays(2);
-        final LocalDateTime end = LocalDateTime.now().minusDays(1);
+        final LocalDateTime start = currentTime.plusDays(2);
+        final LocalDateTime end = currentTime.minusDays(1);
         final Booking newBooking = Booking.builder()
                 .booker(booker)
                 .item(item)
@@ -162,16 +163,16 @@ class BookingServiceTest {
     @Test
     void createBooking_withNotExitedUser() {
         final long bookerId = 5L;
-        final long itemId = 1L;//item.getId();
-        final LocalDateTime start = LocalDateTime.now().minusDays(2);
-        final LocalDateTime end = LocalDateTime.now().plusDays(1);
+        final long itemId = 1L;
+        final LocalDateTime start = currentTime.minusDays(2);
+        final LocalDateTime end = currentTime.plusDays(1);
         final BookingDto bookingDto = BookingDto.builder()
                 .itemId(itemId)
                 .start(start)
                 .end(end)
                 .build();
 
-        when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(null));
+        when(userRepository.findById(anyLong())).thenReturn(Optional.empty());
 
 
         final NotFoundException exception = assertThrows(NotFoundException.class,
@@ -190,8 +191,8 @@ class BookingServiceTest {
         final User booker = userList.get(0);
         final long bookerId = booker.getId();
         final long itemId = 10L;
-        final LocalDateTime start = LocalDateTime.now().minusDays(2);
-        final LocalDateTime end = LocalDateTime.now().plusDays(1);
+        final LocalDateTime start = currentTime.minusDays(2);
+        final LocalDateTime end = currentTime.plusDays(1);
         final BookingDto bookingDto = BookingDto.builder()
                 .itemId(itemId)
                 .start(start)
@@ -199,9 +200,7 @@ class BookingServiceTest {
                 .build();
 
         when(userRepository.findById(anyLong())).thenReturn(Optional.of(booker));
-        when(itemRepository.findById(anyLong())).thenReturn(Optional.ofNullable(null));
-//                .thenThrow(new NotFoundException(String.format(MSG_ITEM_WITH_ID_NOT_FOUND, itemId)));
-
+        when(itemRepository.findById(anyLong())).thenReturn(Optional.empty());
 
         final NotFoundException exception = assertThrows(NotFoundException.class,
                 () -> bookingService.createBooking(bookerId, bookingDto));
@@ -220,8 +219,8 @@ class BookingServiceTest {
         final long bookerId = booker.getId();
         final Item item = itemList.get(0);
         final long itemId = item.getId();
-        final LocalDateTime start = LocalDateTime.now().minusDays(2);
-        final LocalDateTime end = LocalDateTime.now().plusDays(1);
+        final LocalDateTime start = currentTime.minusDays(2);
+        final LocalDateTime end = currentTime.plusDays(1);
         final BookingDto bookingDto = BookingDto.builder()
                 .itemId(itemId)
                 .start(start)
@@ -249,8 +248,8 @@ class BookingServiceTest {
         final long bookerId = booker.getId();
         final Item item = itemList.get(3);
         final long itemId = item.getId();
-        final LocalDateTime start = LocalDateTime.now().minusDays(2);
-        final LocalDateTime end = LocalDateTime.now().plusDays(1);
+        final LocalDateTime start = currentTime.minusDays(2);
+        final LocalDateTime end = currentTime.plusDays(1);
         final BookingDto bookingDto = BookingDto.builder()
                 .itemId(itemId)
                 .start(start)
@@ -278,8 +277,8 @@ class BookingServiceTest {
         final long bookerId = booker.getId();
         final Item item = itemList.get(0);
         final long itemId = item.getId();
-        final LocalDateTime start = LocalDateTime.now().minusDays(1);
-        final LocalDateTime end = LocalDateTime.now().plusDays(2);
+        final LocalDateTime start = currentTime.minusDays(1);
+        final LocalDateTime end = currentTime.plusDays(2);
         final BookingDto bookingDto = BookingDto.builder()
                 .itemId(itemId)
                 .start(start)
@@ -314,7 +313,7 @@ class BookingServiceTest {
         final LocalDateTime start = booking.getStart();
         final LocalDateTime end = booking.getEnd();
 
-        when(bookingRepository.findById(anyLong())).thenReturn(Optional.ofNullable(booking));
+        when(bookingRepository.findById(anyLong())).thenReturn(Optional.of(booking));
         when(bookingRepository
                 .existsApprovedBookingForItemWithCrossTime(anyLong(), any(LocalDateTime.class), any(LocalDateTime.class)))
                 .thenReturn(false);
@@ -339,7 +338,7 @@ class BookingServiceTest {
         final LocalDateTime start = booking.getStart();
         final LocalDateTime end = booking.getEnd();
 
-        when(bookingRepository.findById(anyLong())).thenReturn(Optional.ofNullable(booking));
+        when(bookingRepository.findById(anyLong())).thenReturn(Optional.of(booking));
 
         final NotFoundException exception = assertThrows(NotFoundException.class,
                 () -> bookingService.approveBooking(userId, bookingId, true));
@@ -359,7 +358,7 @@ class BookingServiceTest {
         final LocalDateTime start = booking.getStart();
         final LocalDateTime end = booking.getEnd();
 
-        when(bookingRepository.findById(anyLong())).thenReturn(Optional.ofNullable(booking));
+        when(bookingRepository.findById(anyLong())).thenReturn(Optional.of(booking));
         final RequestException exception = assertThrows(RequestException.class,
                 () -> bookingService.approveBooking(userId, bookingId, true));
 
@@ -378,7 +377,7 @@ class BookingServiceTest {
         final LocalDateTime start = booking.getStart();
         final LocalDateTime end = booking.getEnd();
 
-        when(bookingRepository.findById(anyLong())).thenReturn(Optional.ofNullable(booking));
+        when(bookingRepository.findById(anyLong())).thenReturn(Optional.of(booking));
 
         final NoAccessException exception = assertThrows(NoAccessException.class,
                 () -> bookingService.approveBooking(userId, bookingId, true));
@@ -398,7 +397,7 @@ class BookingServiceTest {
         final LocalDateTime start = booking.getStart();
         final LocalDateTime end = booking.getEnd();
 
-        when(bookingRepository.findById(anyLong())).thenReturn(Optional.ofNullable(booking));
+        when(bookingRepository.findById(anyLong())).thenReturn(Optional.of(booking));
         final NoAccessException exception = assertThrows(NoAccessException.class,
                 () -> bookingService.approveBooking(userId, bookingId, true));
 
@@ -418,7 +417,7 @@ class BookingServiceTest {
         final LocalDateTime start = booking.getStart();
         final LocalDateTime end = booking.getEnd();
 
-        when(bookingRepository.findById(anyLong())).thenReturn(Optional.ofNullable(booking));
+        when(bookingRepository.findById(anyLong())).thenReturn(Optional.of(booking));
         when(bookingRepository.existsApprovedBookingForItemWithCrossTime(anyLong(), any(), any())).thenReturn(true);
 
         final AvailableException exception = assertThrows(AvailableException.class,
@@ -437,7 +436,7 @@ class BookingServiceTest {
     @Test
     void approveBooking_withBookingNotExist() {
         when(bookingRepository.findById(anyLong()))
-                .thenReturn(Optional.ofNullable(null));
+                .thenReturn(Optional.empty());
 
         final long bookingId = 5L;
         final NotFoundException exception = assertThrows(NotFoundException.class,
@@ -446,7 +445,7 @@ class BookingServiceTest {
         assertEquals(String.format(Constants.MSG_BOOKING_WITH_ID_NOT_FOUND, bookingId), exception.getMessage());
 
         verify(bookingRepository, times(1)).findById(bookingId);
-        final LocalDateTime currentTime = LocalDateTime.now();
+
         verify(bookingRepository, never()).existsApprovedBookingForItemWithCrossTime(bookingId, currentTime.minusDays(1), currentTime.plusDays(1));
         verify(bookingRepository, never()).save(new Booking());
     }
@@ -490,7 +489,7 @@ class BookingServiceTest {
 
         when(userService.existUser(anyLong())).thenReturn(true);
         when(bookingRepository.findByIdAndBookerOrOwner(anyLong(), anyLong()))
-                .thenReturn(Optional.ofNullable(null));
+                .thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class,
                 () -> bookingService.getBookingByIdForUser(userId, bookingID));
