@@ -24,14 +24,6 @@ class UserRepositoryTest {
     @BeforeEach
     void addUsers() {
         users = TestInitDataUtil.getUserList(repository);
-//        final User user1 = repository.save(User.builder()
-//                .name("Jon").email("jon@mail.ru")
-//                .build());
-//        final User user2 = repository.save(User.builder()
-//                .name("Jane").email("jane@mail.ru")
-//                .build());
-//
-//        users = List.of(user1, user2);
     }
 
     @ParameterizedTest

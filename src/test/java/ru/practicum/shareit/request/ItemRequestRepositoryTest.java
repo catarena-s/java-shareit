@@ -107,11 +107,10 @@ class ItemRequestRepositoryTest {
 
     @NotNull
     private ItemRequest getRequest(String description, User author) {
-        final ItemRequest request2 = requestRepository.save(ItemRequest.builder()
+        return requestRepository.save(ItemRequest.builder()
                 .description(description)
                 .requester(author)
                 .created(LocalDateTime.now())
                 .build());
-        return request2;
     }
 }

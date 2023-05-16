@@ -562,14 +562,6 @@ class ItemServiceImplTest {
         final CommentDto actualComment = itemService.addComment(expectedUserId, expectedItemId, commentDto);
 
         assertEquals(CommentMapper.toDto(expectedComment), actualComment);
-//todo
-//        verify(userRepository, times(1)).findById(expectedUserId);
-//        verify(commentRepository, times(1))
-//                .existsByItemIdAndAuthorId(expectedItemId, expectedUserId);
-//        verify(bookingRepository, times(1))
-//                .findByItemIdAndBookerIdAndEndBefore(expectedItemId, expectedUserId,
-//                        actualComment.getCreated());
-//        verify(commentRepository, times(1)).save(expectedComment);
     }
 
     @Test
