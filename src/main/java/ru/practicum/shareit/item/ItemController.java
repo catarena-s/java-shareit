@@ -40,7 +40,7 @@ public class ItemController {
     @GetMapping
     public Collection<ItemDto> getAll(@RequestHeader("X-Sharer-User-Id") long userId,
                                       @RequestParam(name = "from", required = false) @Min(0) Integer from,
-                                      @RequestParam(name = "size", required = false) @Min(1) @Max(50) Integer size) {
+                                      @RequestParam(name = "size", defaultValue = "20") @Min(1) @Max(50) Integer size) {
         log.debug("Request received GET '/items'");
         log.debug(X_SHARER_USER_ID, userId);
         if (from == null) {
@@ -81,7 +81,7 @@ public class ItemController {
             @RequestHeader(value = "X-Sharer-User-Id", required = false) long userId,
             @RequestParam(name = "text") String text,
             @RequestParam(name = "from", required = false) @Min(0) Integer from,
-            @RequestParam(name = "size", required = false) @Min(1) @Max(50) Integer size
+            @RequestParam(name = "size", defaultValue = "20") @Min(1) @Max(50) Integer size
     ) {
         log.debug("Request received GET '/items/search?text={}'", text);
         log.debug(X_SHARER_USER_ID, userId);

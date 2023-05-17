@@ -15,11 +15,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.shareit.user.dto.UserDto;
-import ru.practicum.shareit.util.Constants;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import java.util.Collection;
+
+import static ru.practicum.shareit.util.Constants.SORT_BY_ID_ACS;
 
 @Slf4j
 @RestController
@@ -30,12 +32,12 @@ public class UserController {
 
     @GetMapping
     public Collection<UserDto> getAll(@RequestParam(name = "from", required = false) @Min(0) Integer from,
-                                      @RequestParam(name = "size", required = false) @Min(1) Integer size) {
+                                      @RequestParam(name = "size", defaultValue = "20") @Min(1) @Max(50) Integer size) {
         log.debug("Request received GET '/users'");
         if (from == null) {
             return service.getAll(null);
         }
-        final PageRequest page = PageRequest.of(from / size, size, Constants.SORT_BY_ID_ACS);
+        final PageRequest page = PageRequest.of(from / size, size, SORT_BY_ID_ACS);
         return service.getAll(page);
     }
 

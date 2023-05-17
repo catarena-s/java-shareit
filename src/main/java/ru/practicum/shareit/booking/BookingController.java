@@ -16,12 +16,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.shareit.booking.dto.BookingDto;
-import ru.practicum.shareit.util.Constants;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import java.util.List;
 
+import static ru.practicum.shareit.util.Constants.SORT_BY_START_DESC;
 import static ru.practicum.shareit.util.Constants.X_SHARER_USER_ID;
 
 @RestController
@@ -58,7 +59,7 @@ public class BookingController {
             @RequestHeader(value = "X-Sharer-User-Id") long userId,
             @RequestParam(name = "state", defaultValue = "ALL") String state,
             @RequestParam(name = "from", required = false) @Min(0) Integer from,
-            @RequestParam(name = "size", required = false) @Min(1) Integer size
+            @RequestParam(name = "size", defaultValue = "20") @Min(1) @Max(50) Integer size
     ) {
         log.debug(X_SHARER_USER_ID, userId);
         if (from == null) {
@@ -66,7 +67,7 @@ public class BookingController {
             return service.getAllByBooker(userId, state, null);
         }
         log.debug("Request received GET '/bookings?state={}&from={}&size={}'", state, from, size);
-        final PageRequest page = PageRequest.of(from / size, size, Constants.SORT_BY_START_DESC);
+        final PageRequest page = PageRequest.of(from / size, size, SORT_BY_START_DESC);
         return service.getAllByBooker(userId, state, page);
     }
 
@@ -75,7 +76,7 @@ public class BookingController {
             @RequestHeader(value = "X-Sharer-User-Id") long userId,
             @RequestParam(name = "state", defaultValue = "ALL") String state,
             @RequestParam(name = "from", required = false) @Min(0) Integer from,
-            @RequestParam(name = "size", required = false) @Min(1) Integer size
+            @RequestParam(name = "size", defaultValue = "20") @Min(1) @Max(50) Integer size
     ) {
         log.debug(X_SHARER_USER_ID, userId);
         if (from == null) {
