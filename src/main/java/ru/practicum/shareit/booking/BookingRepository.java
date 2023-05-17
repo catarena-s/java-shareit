@@ -17,14 +17,6 @@ import java.util.Optional;
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Long>, QuerydslPredicateExecutor<Booking> {
     /**
-     * Check exists booking by Id and bookerId
-     * @param bookingId
-     * @param userId
-     * @return true or false
-     */
-    boolean existsByIdAndBookerId(long bookingId, long userId);
-
-    /**
      * Find booking by Id for booker or item's owner
      * @param userId
      * @param id
@@ -49,7 +41,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, Queryds
                                           Sort order);
 
     /**
-     *  Find all bookings by item's owner and itemId and status
+     * Find all bookings by item's owner and itemId and status
      * @param itemId
      * @param ownerId
      * @param status

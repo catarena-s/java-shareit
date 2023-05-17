@@ -16,7 +16,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     /**
      * Find all comments for items
-      * @param items
+     * @param items
      * @return
      */
     List<Comment> findAllByItemIn(List<Item> items);

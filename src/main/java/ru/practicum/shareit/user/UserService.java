@@ -1,5 +1,6 @@
 package ru.practicum.shareit.user;
 
+import org.springframework.data.domain.PageRequest;
 import ru.practicum.shareit.user.dto.UserDto;
 
 import java.util.Collection;
@@ -9,7 +10,7 @@ public interface UserService {
      * Get all users
      * @return collection of user, converted to DTO
      */
-    Collection<UserDto> getAll();
+    Collection<UserDto> getAll(PageRequest page);
 
     /**
      * Create new user
