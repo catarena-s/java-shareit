@@ -31,7 +31,7 @@ public class UserClient extends BaseClient {
                 "from", from,
                 "size", size
         );
-        return get("?from={from}&size={size}", parameters);
+        return get("?from={from}&size={size}", null, parameters);
     }
 
     public ResponseEntity<Object> getAllUsers() {
@@ -43,7 +43,7 @@ public class UserClient extends BaseClient {
     }
 
     public ResponseEntity<Object> updateUser(long userId, UserDto requestDto) {
-        return patch("/" + userId, requestDto);
+        return patch("/" + userId, userId, requestDto);
     }
 
     public ResponseEntity<Object> delete(long userId) {
