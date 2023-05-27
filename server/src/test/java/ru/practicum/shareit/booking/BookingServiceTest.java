@@ -59,7 +59,6 @@ class BookingServiceTest {
     private ItemRepository itemRepository;
     @Mock
     private UserRepository userRepository;
-    //    private final Clock clock = Constants.TEST_CLOCK;
     @InjectMocks
     private BookingServiceImpl bookingService;
     private List<User> userList;
@@ -69,7 +68,6 @@ class BookingServiceTest {
 
     @BeforeEach
     void setUp() {
-//        bookingService.setClock(clock);
         userList = List.of(
                 makeUser(1L, "Jon", "jon@mail.ru"),
                 makeUser(2L, "Jane", "jane@mail.ru"),
@@ -132,34 +130,6 @@ class BookingServiceTest {
         verify(bookingRepository, times(1)).existsApprovedBookingForItemWithCrossTime(itemId, start, end);
         verify(bookingRepository, times(1)).save(newBooking);
     }
-
-//    @Test
-//    void createBooking_withNotValidDates() {
-//        final User booker = userList.get(0);
-//        final long bookerId = booker.getId();
-//        final Item item = itemList.get(0);
-//        final long itemId = item.getId();
-//        final LocalDateTime start = currentTime.plusDays(2);
-//        final LocalDateTime end = currentTime.minusDays(1);
-//        final Booking newBooking = Booking.builder()
-//                .item(item)
-//                .start(start)
-//                .end(end)
-//                .build();
-//
-//        final BookingDto dto = BookingDto.builder()
-//                .itemId(item.getId())
-//                .start(start)
-//                .end(end)
-//                .build();
-//
-//        assertThrows(ValidateException.class, () -> bookingService.createBooking(bookerId, dto));
-//
-//        verify(userRepository, never()).findById(bookerId);
-//        verify(itemRepository, never()).findById(itemId);
-//        verify(bookingRepository, never()).existsApprovedBookingForItemWithCrossTime(itemId, start, end);
-//        verify(bookingRepository, never()).save(newBooking);
-//    }
 
     @Test
     void createBooking_withNotExitedUser() {
