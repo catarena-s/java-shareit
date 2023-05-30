@@ -20,9 +20,6 @@ import ru.practicum.shareit.item.dto.CommentDtoResponse;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemDtoResponse;
 
-import javax.validation.Valid;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -41,8 +38,8 @@ public class ItemController {
 
     @GetMapping
     public Collection<ItemDtoResponse> getAll(@RequestHeader("X-Sharer-User-Id") long userId,
-                                              @RequestParam(name = "from", required = false) @Min(0) Integer from,
-                                              @RequestParam(name = "size", defaultValue = "20") @Min(1) @Max(50) Integer size) {
+                                              @RequestParam(name = "from", required = false) Integer from,
+                                              @RequestParam(name = "size", defaultValue = "20") Integer size) {
         log.debug(X_SHARER_USER_ID, userId);
         if (from == null) {
             log.debug("Request received GET '/items'");
@@ -64,7 +61,7 @@ public class ItemController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ItemDtoResponse create(@RequestHeader(value = "X-Sharer-User-Id", required = false) long userId,
-                                  @Valid @RequestBody ItemDto itemDto) {
+                                  @RequestBody ItemDto itemDto) {
         log.debug(X_SHARER_USER_ID, userId);
         log.debug("Request received POST '/items' : {}", itemDto);
         return service.create(itemDto, userId);
@@ -83,8 +80,8 @@ public class ItemController {
     public List<ItemDtoResponse> search(
             @RequestHeader(value = "X-Sharer-User-Id", required = false) long userId,
             @RequestParam(name = "text") String text,
-            @RequestParam(name = "from", required = false) @Min(0) Integer from,
-            @RequestParam(name = "size", defaultValue = "20") @Min(1) @Max(50) Integer size
+            @RequestParam(name = "from", required = false) Integer from,
+            @RequestParam(name = "size", defaultValue = "20") Integer size
     ) {
         log.debug(X_SHARER_USER_ID, userId);
         if (text.isBlank()) {
@@ -103,7 +100,7 @@ public class ItemController {
     @PostMapping("/{itemId}/comment")
     public CommentDtoResponse createCommentToItem(@RequestHeader(value = "X-Sharer-User-Id", required = false) long userId,
                                                   @PathVariable(name = "itemId") long itemId,
-                                                  @Valid @RequestBody CommentDto commentDto) {
+                                                  @RequestBody CommentDto commentDto) {
         log.debug(X_SHARER_USER_ID, userId);
         log.debug("Request received POST '/items/{}/comment' : {}", itemId, commentDto);
         return service.addComment(userId, itemId, commentDto);

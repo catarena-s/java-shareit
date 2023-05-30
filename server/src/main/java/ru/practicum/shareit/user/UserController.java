@@ -16,9 +16,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.shareit.user.dto.UserDto;
 
-import javax.validation.Valid;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
 import java.util.Collection;
 
 import static ru.practicum.shareit.util.Constants.SORT_BY_ID_ACS;
@@ -31,8 +28,8 @@ public class UserController {
     private final UserService service;
 
     @GetMapping
-    public Collection<UserDto> getAll(@RequestParam(name = "from", required = false) @Min(0) Integer from,
-                                      @RequestParam(name = "size", defaultValue = "20") @Min(1) @Max(50) Integer size) {
+    public Collection<UserDto> getAll(@RequestParam(name = "from", required = false) Integer from,
+                                      @RequestParam(name = "size", defaultValue = "20") Integer size) {
         if (from == null) {
             log.debug("Request received GET '/users'");
             return service.getAll(null);
@@ -51,7 +48,7 @@ public class UserController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public UserDto create(
-            @Valid @RequestBody UserDto userDto) {
+            @RequestBody UserDto userDto) {
         log.debug("Request received POST '/users' : {}", userDto);
         return service.create(userDto);
     }

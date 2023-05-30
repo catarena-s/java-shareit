@@ -19,8 +19,6 @@ import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingDtoResponse;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
 import java.util.List;
 
 import static ru.practicum.shareit.util.Constants.X_SHARER_USER_ID;
@@ -57,9 +55,9 @@ public class BookingController {
     @GetMapping
     List<BookingDtoResponse> getAllByBooker(
             @RequestHeader(value = "X-Sharer-User-Id") long userId,
-            @RequestParam(name = "state", defaultValue = "ALL") String state,
-            @RequestParam(name = "from", required = false) @Min(0) Integer from,
-            @RequestParam(name = "size", defaultValue = "20") @Min(1) @Max(50) Integer size
+            @RequestParam(name = "state") String state,
+            @RequestParam(name = "from", required = false) Integer from,
+            @RequestParam(name = "size", defaultValue = "20") Integer size
     ) {
         log.debug(X_SHARER_USER_ID, userId);
         if (from == null) {
@@ -74,9 +72,9 @@ public class BookingController {
     @GetMapping("/owner")
     List<BookingDtoResponse> getAllByOwner(
             @RequestHeader(value = "X-Sharer-User-Id") long userId,
-            @RequestParam(name = "state", defaultValue = "ALL") String state,
-            @RequestParam(name = "from", required = false) @Min(0) Integer from,
-            @RequestParam(name = "size", defaultValue = "20") @Min(1) @Max(50) Integer size
+            @RequestParam(name = "state") String state,
+            @RequestParam(name = "from", required = false) Integer from,
+            @RequestParam(name = "size", defaultValue = "20") Integer size
     ) {
         log.debug(X_SHARER_USER_ID, userId);
         if (from == null) {

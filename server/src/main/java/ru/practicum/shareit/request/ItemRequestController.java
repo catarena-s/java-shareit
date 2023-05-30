@@ -17,9 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.shareit.request.dto.ItemRequestDto;
 import ru.practicum.shareit.request.dto.ItemRequestDtoResponse;
 
-import javax.validation.Valid;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
 import java.util.List;
 
 import static ru.practicum.shareit.util.Constants.SORT_BY_REQUEST_CREATE_DATE_DESC;
@@ -55,7 +52,7 @@ public class ItemRequestController {
     @ResponseStatus(HttpStatus.CREATED)
     public ItemRequestDtoResponse create(
             @RequestHeader("X-Sharer-User-Id") long userId,
-            @Valid @RequestBody ItemRequestDto itemRequestDto
+            @RequestBody ItemRequestDto itemRequestDto
     ) {
         log.debug(X_SHARER_USER_ID, userId);
         log.debug("Request received POST '/requests'");
@@ -65,8 +62,8 @@ public class ItemRequestController {
     @GetMapping("/all")
     public List<ItemRequestDtoResponse> getAllFromOtherUser(
             @RequestHeader("X-Sharer-User-Id") long userId,
-            @RequestParam(name = "from", required = false) @Min(0) Integer from,
-            @RequestParam(name = "size", defaultValue = "20") @Min(1) @Max(50) Integer size
+            @RequestParam(name = "from", required = false) Integer from,
+            @RequestParam(name = "size", defaultValue = "20") Integer size
     ) {
         log.debug(X_SHARER_USER_ID, userId);
         if (from == null) {
